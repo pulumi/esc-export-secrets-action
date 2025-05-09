@@ -27,11 +27,6 @@ inputs:
         description:
             'The GitHub Access Token to use to authenticate with the GitHub API'
         required: true
-    github-secrets:
-        description:
-            'A JSON object that contains the secrets visible to this repository.
-            The value of this should be ${{ toJSON(secrets) }}'
-        required: true
     cloud-url:
         description:
             'The URL of the Pulumi Cloud API. Defaults to

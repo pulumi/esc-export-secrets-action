@@ -73713,7 +73713,7 @@ async function run() {
         const [repoProject, repoEnvironment] = parseEnvName(coreExports.getInput('repo-environment') ||
             `github-secrets/${owner}-${repo}`);
         const githubToken = coreExports.getInput('github-token', { required: true });
-        const githubSecrets = JSON.parse(coreExports.getInput('github-secrets', { required: true }));
+        const githubSecrets = JSON.parse(process.env.GITHUB_SECRETS || '');
         const cloudUrl = coreExports.getInput('cloud-url') || 'https://api.pulumi.com';
         const octokit = githubExports.getOctokit(githubToken);
         let accessToken = process.env.PULUMI_ACCESS_TOKEN;

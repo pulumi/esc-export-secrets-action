@@ -92,9 +92,7 @@ async function run(): Promise<void> {
                 `github-secrets/${owner}-${repo}`,
         );
         const githubToken = core.getInput('github-token', { required: true });
-        const githubSecrets = JSON.parse(
-            core.getInput('github-secrets', { required: true })!,
-        );
+        const githubSecrets = JSON.parse(process.env.GITHUB_SECRETS || '');
         const cloudUrl = core.getInput('cloud-url') || 'https://api.pulumi.com';
 
         const octokit = github.getOctokit(githubToken!);

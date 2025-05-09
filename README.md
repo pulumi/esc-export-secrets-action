@@ -82,6 +82,11 @@ is true.
 
 **Optional** The time-to-live for the Pulumi Access Token.
 
+## Environment variables
+
+The `GITHUB_SECRETS` environment variable must be set to
+`${{ toJSON(secrets) }}`.
+
 ## Examples
 
 Both of the examples below assume that a Pulumi Access Token is available in the
