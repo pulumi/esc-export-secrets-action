@@ -1,5 +1,5 @@
 import * as yaml from 'yaml';
-import { makeEnvironments } from './index';
+import { makeEnvironments } from './env';
 
 describe('index.ts', () => {
     describe('makeEnvironments', () => {
