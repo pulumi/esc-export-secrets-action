@@ -75,11 +75,3 @@ is true.
 ### `oidc-expiration`
 
 **Optional** The time-to-live for the Pulumi Access Token.
-
-## Deprecated inputs
-
-### `keys` (`ESC_ACTION_KEYS`)
-
-**Optional** (_Deprecated in favor of export-environment-variables_) A
-comma-separated list of keys to inject into the current action/workflow
-environment. If not specified, all keys from the environment will be injected.
