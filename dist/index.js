@@ -73732,7 +73732,9 @@ async function run() {
         // Create the ESC client
         const escClient = new escExports.EscApi(new escExports.Configuration({ accessToken }));
         // Fetch organization, repository, and repository-organization secret key sets
-        const githubOrgSecrets = await collectSecrets((page) => octokit.rest.actions.listOrgSecrets({ org: owner, page }));
+        //        const githubOrgSecrets = await collectSecrets((page: number) =>
+        //            octokit.rest.actions.listOrgSecrets({ org: owner, page }),
+        //        );
         const githubRepoSecrets = await collectSecrets((page) => octokit.rest.actions.listRepoSecrets({ owner, repo, page }));
         const githubRepoOrgSecrets = await collectSecrets((page) => octokit.rest.actions.listRepoOrganizationSecrets({
             owner,
@@ -73745,7 +73747,7 @@ async function run() {
             orgProject,
             orgEnvironment,
             githubSecrets,
-            githubOrgSecrets,
+            githubOrgSecrets: new Set(),
             githubRepoSecrets,
             githubRepoOrgSecrets,
         });
