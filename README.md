@@ -106,6 +106,9 @@ jobs:
               with:
                   organization: my-org
                   export-organization-secrets: true
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+              env:
+                  GITHUB_SECRETS: ${{ toJSON(secrets) }}
 ```
 
 #### Organization secrets
@@ -151,6 +154,9 @@ jobs:
             - uses: pulumi/esc-export-secrets-action@v1
               with:
                   organization: my-org
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+              env:
+                  GITHUB_SECRETS: ${{ toJSON(secrets) }}
 ```
 
 #### Repository secrets
