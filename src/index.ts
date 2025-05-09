@@ -81,6 +81,9 @@ async function run(): Promise<void> {
 
         // Parse inputs
         const organization = core.getInput('organization', { required: true })!;
+        const exportOrganizationSecrets = core.getBooleanInput(
+            'export-organization-secrets',
+        );
         const [orgProject, orgEnvironment] = parseEnvName(
             core.getInput('org-environment') || `github-secrets/${owner}`,
         );
@@ -134,6 +137,7 @@ async function run(): Promise<void> {
 
         // Compute environment defs
         const { orgYaml, repoYaml } = makeEnvironments({
+            exportOrganizationSecrets,
             orgProject,
             orgEnvironment,
             githubSecrets,

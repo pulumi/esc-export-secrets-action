@@ -73620,22 +73620,24 @@ function difference(a, b) {
     return new Set(Array.from(a.values()).filter(k => !b.has(k)));
 }
 function makeEnvironments(args) {
-    const { orgProject, orgEnvironment, githubSecrets, githubOrgSecrets, githubRepoSecrets, githubRepoOrgSecrets, } = args;
+    const { exportOrganizationSecrets, orgProject, orgEnvironment, githubSecrets, githubOrgSecrets, githubRepoSecrets, githubRepoOrgSecrets, } = args;
     // Check for access to all org secrets. If this repository does not have access to all of the org's secrets, we will only update the repository's environment.
     const repoHasAccessToAllOrgSecrets = intersect(githubRepoOrgSecrets, githubOrgSecrets).size ==
         githubOrgSecrets.size;
-    if (!repoHasAccessToAllOrgSecrets) {
+    if (exportOrganizationSecrets && !repoHasAccessToAllOrgSecrets) {
         const vars = Array.from(difference(githubOrgSecrets, githubRepoOrgSecrets)).join('\n');
-        coreExports.warning(`This repository does not have access to the following organization secrets:\n\n${vars}`);
-        coreExports.warning('As a result, this action will not import organization secrets. Please run this action from a repository that has access to all organization secrets in order to import organization secrets');
+        coreExports.error(`This repository does not have access to the following organization secrets:\n\n${vars}`);
+        coreExports.error('As a result, this action will not export organization secrets. Please run this action from a repository that has access to all organization secrets in order to export organization secrets');
+        throw new Error();
     }
     // Check for overridden organization secrets. If this repository overrides organization secrets, we will only update the repository's environment.
     const overriddenSecrets = intersect(githubOrgSecrets, githubRepoSecrets);
     const repoOverridesOrgSecrets = overriddenSecrets.size != 0;
-    if (repoOverridesOrgSecrets) {
+    if (exportOrganizationSecrets && repoOverridesOrgSecrets) {
         const vars = Array.from(overriddenSecrets.values()).join('\n');
-        coreExports.warning(`This repository overrides the following organization secrets:\n\n${vars}`);
-        coreExports.warning('As a result, this action will not import organization secrets. Please run this action from a repository that does not override organization secrets in order to import organization secrets');
+        coreExports.error(`This repository overrides the following organization secrets:\n\n${vars}`);
+        coreExports.error('As a result, this action will not export organization secrets. Please run this action from a repository that does not override organization secrets in order to export organization secrets');
+        throw new Error();
     }
     const orgSecrets = Object.fromEntries(Object.entries(githubSecrets)
         .filter(([key]) => githubOrgSecrets.has(key))
@@ -73644,8 +73646,7 @@ function makeEnvironments(args) {
         .filter(([key]) => githubRepoSecrets.has(key))
         .sort());
     // Update the organization env if this repo can access all organization secrets and does not override any organization secrets.
-    const updateOrganizationEnvironment = repoHasAccessToAllOrgSecrets && !repoOverridesOrgSecrets;
-    const orgYaml = updateOrganizationEnvironment
+    const orgYaml = exportOrganizationSecrets
         ? makeEnvironmentDefinition(orgSecrets)
         : undefined;
     const updateRepoEnvironment = Object.keys(repoSecrets).length != 0;
@@ -73707,6 +73708,7 @@ async function run() {
         const { owner, repo } = githubExports.context.repo;
         // Parse inputs
         const organization = coreExports.getInput('organization', { required: true });
+        const exportOrganizationSecrets = coreExports.getBooleanInput('export-organization-secrets');
         const [orgProject, orgEnvironment] = parseEnvName(coreExports.getInput('org-environment') || `github-secrets/${owner}`);
         const [repoProject, repoEnvironment] = parseEnvName(coreExports.getInput('repo-environment') ||
             `github-secrets/${owner}-${repo}`);
@@ -73739,6 +73741,7 @@ async function run() {
         }));
         // Compute environment defs
         const { orgYaml, repoYaml } = makeEnvironments({
+            exportOrganizationSecrets,
             orgProject,
             orgEnvironment,
             githubSecrets,

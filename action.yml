@@ -9,6 +9,12 @@ inputs:
         description: 'The Pulumi Organization that contains the environments.'
         required: true
         default: ''
+    export-organization-secrets:
+        description:
+            'True to update the organization environment as well as the
+            repository environment.'
+        required: false
+        default: false
     org-environment:
         description: 'The ESC environment that will hold organization secrets'
         required: false

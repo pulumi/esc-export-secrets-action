@@ -5,6 +5,7 @@ describe('index.ts', () => {
     describe('makeEnvironments', () => {
         it('handles disjoint secret sets', () => {
             const { orgYaml, repoYaml } = makeEnvironments({
+                exportOrganizationSecrets: true,
                 orgProject: 'import',
                 orgEnvironment: 'org-secrets',
                 githubSecrets: { FOO: 'secret-foo', BAR: 'secret-bar' },
@@ -26,48 +27,36 @@ describe('index.ts', () => {
         });
 
         it('handles unavailable org secrets', () => {
-            const { orgYaml, repoYaml } = makeEnvironments({
-                orgProject: 'import',
-                orgEnvironment: 'org-secrets',
-                githubSecrets: { FOO: 'secret-foo', BAR: 'secret-bar' },
-                githubOrgSecrets: new Set(['FOO']),
-                githubRepoSecrets: new Set(['BAR']),
-                githubRepoOrgSecrets: new Set(),
-            });
-            expect(orgYaml).toBe(undefined);
-            expect(repoYaml).toBe(
-                yaml.stringify({
-                    imports: ['import/org-secrets'],
-                    values: { environmentVariables: { BAR: 'secret-bar' } },
-                }),
-            );
+            expect(() => {
+                makeEnvironments({
+                    exportOrganizationSecrets: true,
+                    orgProject: 'import',
+                    orgEnvironment: 'org-secrets',
+                    githubSecrets: { FOO: 'secret-foo', BAR: 'secret-bar' },
+                    githubOrgSecrets: new Set(['FOO']),
+                    githubRepoSecrets: new Set(['BAR']),
+                    githubRepoOrgSecrets: new Set(),
+                });
+            }).toThrow();
         });
 
         it('handles overridden org secrets', () => {
-            const { orgYaml, repoYaml } = makeEnvironments({
-                orgProject: 'import',
-                orgEnvironment: 'org-secrets',
-                githubSecrets: { FOO: 'secret-foo', BAR: 'secret-bar' },
-                githubOrgSecrets: new Set(['FOO']),
-                githubRepoSecrets: new Set(['FOO', 'BAR']),
-                githubRepoOrgSecrets: new Set(['FOO']),
-            });
-            expect(orgYaml).toBe(undefined);
-            expect(repoYaml).toBe(
-                yaml.stringify({
-                    imports: ['import/org-secrets'],
-                    values: {
-                        environmentVariables: {
-                            BAR: 'secret-bar',
-                            FOO: 'secret-foo',
-                        },
-                    },
-                }),
-            );
+            expect(() => {
+                makeEnvironments({
+                    exportOrganizationSecrets: true,
+                    orgProject: 'import',
+                    orgEnvironment: 'org-secrets',
+                    githubSecrets: { FOO: 'secret-foo', BAR: 'secret-bar' },
+                    githubOrgSecrets: new Set(['FOO']),
+                    githubRepoSecrets: new Set(['FOO', 'BAR']),
+                    githubRepoOrgSecrets: new Set(['FOO']),
+                });
+            }).toThrow();
         });
 
         it('handles empty repo secrets', () => {
             const { orgYaml, repoYaml } = makeEnvironments({
+                exportOrganizationSecrets: true,
                 orgProject: 'import',
                 orgEnvironment: 'org-secrets',
                 githubSecrets: { FOO: 'secret-foo', BAR: 'secret-bar' },
@@ -86,6 +75,25 @@ describe('index.ts', () => {
                 }),
             );
             expect(repoYaml).toBe(undefined);
+        });
+
+        it('respects exportOrganizationSecrets', () => {
+            const { orgYaml, repoYaml } = makeEnvironments({
+                exportOrganizationSecrets: false,
+                orgProject: 'import',
+                orgEnvironment: 'org-secrets',
+                githubSecrets: { FOO: 'secret-foo', BAR: 'secret-bar' },
+                githubOrgSecrets: new Set(['FOO']),
+                githubRepoSecrets: new Set(['BAR']),
+                githubRepoOrgSecrets: new Set(['FOO']),
+            });
+            expect(orgYaml).toBe(undefined);
+            expect(repoYaml).toBe(
+                yaml.stringify({
+                    imports: ['import/org-secrets'],
+                    values: { environmentVariables: { BAR: 'secret-bar' } },
+                }),
+            );
         });
     });
 });

@@ -22,6 +22,7 @@ function difference<T>(a: Set<T>, b: Set<T>): Set<T> {
 }
 
 export interface MakeEnvironmentsArgs {
+    exportOrganizationSecrets: boolean;
     orgProject: string;
     orgEnvironment: string;
     githubSecrets: any;
@@ -39,6 +40,7 @@ export function makeEnvironments(
     args: MakeEnvironmentsArgs,
 ): MakeEnvironmentsResult {
     const {
+        exportOrganizationSecrets,
         orgProject,
         orgEnvironment,
         githubSecrets,
@@ -51,29 +53,31 @@ export function makeEnvironments(
     const repoHasAccessToAllOrgSecrets =
         intersect(githubRepoOrgSecrets, githubOrgSecrets).size ==
         githubOrgSecrets.size;
-    if (!repoHasAccessToAllOrgSecrets) {
+    if (exportOrganizationSecrets && !repoHasAccessToAllOrgSecrets) {
         const vars = Array.from(
             difference(githubOrgSecrets, githubRepoOrgSecrets),
         ).join('\n');
-        core.warning(
+        core.error(
             `This repository does not have access to the following organization secrets:\n\n${vars}`,
         );
-        core.warning(
-            'As a result, this action will not import organization secrets. Please run this action from a repository that has access to all organization secrets in order to import organization secrets',
+        core.error(
+            'As a result, this action will not export organization secrets. Please run this action from a repository that has access to all organization secrets in order to export organization secrets',
         );
+        throw new Error();
     }
 
     // Check for overridden organization secrets. If this repository overrides organization secrets, we will only update the repository's environment.
     const overriddenSecrets = intersect(githubOrgSecrets, githubRepoSecrets);
     const repoOverridesOrgSecrets = overriddenSecrets.size != 0;
-    if (repoOverridesOrgSecrets) {
+    if (exportOrganizationSecrets && repoOverridesOrgSecrets) {
         const vars = Array.from(overriddenSecrets.values()).join('\n');
-        core.warning(
+        core.error(
             `This repository overrides the following organization secrets:\n\n${vars}`,
         );
-        core.warning(
-            'As a result, this action will not import organization secrets. Please run this action from a repository that does not override organization secrets in order to import organization secrets',
+        core.error(
+            'As a result, this action will not export organization secrets. Please run this action from a repository that does not override organization secrets in order to export organization secrets',
         );
+        throw new Error();
     }
 
     const orgSecrets: any = Object.fromEntries(
@@ -88,9 +92,7 @@ export function makeEnvironments(
     );
 
     // Update the organization env if this repo can access all organization secrets and does not override any organization secrets.
-    const updateOrganizationEnvironment =
-        repoHasAccessToAllOrgSecrets && !repoOverridesOrgSecrets;
-    const orgYaml = updateOrganizationEnvironment
+    const orgYaml = exportOrganizationSecrets
         ? makeEnvironmentDefinition(orgSecrets)
         : undefined;
     const updateRepoEnvironment = Object.keys(repoSecrets).length != 0;

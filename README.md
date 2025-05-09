@@ -23,11 +23,12 @@ This action makes it easy to export GitHub Actions secrets to ESC environments.
 
 Running this action within a repository will create (if necessary) and update
 one environment for organization secrets and another environment for repository
-secrets.
+secrets. The export of organization secrets must be enabled explicitly using the
+`export-organization-secrets` input.
 
 If the repository in which the action runs does not have access to all
 organization secrets or if the repository overrides any organization secrets,
-the action will not update the organization ESC environment.
+the action will refuse to update the organization ESC environment and fail.
 
 If the repository in which the action runs does not have any of its own secrets,
 the action will not create or update the repository ESC environment.
@@ -37,6 +38,11 @@ the action will not create or update the repository ESC environment.
 ### `organization`
 
 The Pulumi Organization that contains the environments.
+
+### `export-organization-secrets`
+
+True to update the organization environment as well as the repository
+environment.
 
 ### `org-environment`
 
@@ -75,3 +81,87 @@ is true.
 ### `oidc-expiration`
 
 **Optional** The time-to-live for the Pulumi Access Token.
+
+## Examples
+
+Both of the examples below assume that a Pulumi Access Token is available in the
+`PULUMI_ACCESS_TOKEN` environment variable. Instead of using long-lived tokens,
+the action can also authenticate with the Pulumi Cloud using OIDC via the
+`oidc-auth` and `oidc-requested-token-type` environment variables.
+
+### Export organization and repository secrets
+
+#### Actions YAML
+
+```yaml
+jobs:
+    export-secrets:
+        steps:
+            - uses: pulumi/esc-export-secrets-action@v1
+              with:
+                  organization: my-org
+                  export-organization-secrets: true
+```
+
+#### Organization secrets
+
+```
+FOO: foo
+BAR: bar
+BAZ: baz
+```
+
+#### Repository secrets
+
+```
+REPO: repo
+```
+
+#### Organization ESC environment, `github-secrets/my-org`
+
+```
+values:
+  environmentVariables:
+    BAR: bar
+    BAZ: baz
+    FOO: foo
+```
+
+#### Repository ESC environment, `github-secrets/my-org-repo`
+
+```
+imports:
+  - github-secrets/my-org
+values:
+  environmentVariables:
+    REPO: repo
+```
+
+### Export repository secrets only
+
+```yaml
+jobs:
+    export-secrets:
+        steps:
+            - uses: pulumi/esc-export-secrets-action@v1
+              with:
+                  organization: my-org
+```
+
+#### Repository secrets
+
+```
+FOO: repo-foo
+REPO: repo
+```
+
+#### Repository ESC environment, `github-secrets/my-org-repo`
+
+```
+imports:
+  - github-secrets/my-org
+values:
+  environmentVariables:
+    FOO: repo-foo
+    REPO: repo
+```
