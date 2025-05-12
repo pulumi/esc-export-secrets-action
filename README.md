@@ -111,11 +111,15 @@ Both of the examples below assume that a Pulumi Access Token is available in the
 the action can also authenticate with the Pulumi Cloud using OIDC via the
 `oidc-auth` and `oidc-requested-token-type` environment variables.
 
+These examples are also configured as manually-triggered workflows with the
+expectation that secrets will be exported irregularly (often once).
+
 ### Export organization and repository secrets
 
 #### Actions YAML
 
 ```yaml
+on: [workflow_dispatch]
 jobs:
     export-secrets:
         steps:
@@ -171,6 +175,7 @@ values:
 ### Export repository secrets only
 
 ```yaml
+on: [workflow_dispatch]
 jobs:
     export-secrets:
         steps:
